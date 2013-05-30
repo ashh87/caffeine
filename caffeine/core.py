@@ -502,7 +502,7 @@ class Caffeine(GObject.GObject):
         logging.info("Attempting to detect screensaver/powersaving type... (" + str(self.dbusDetectionFailures) + " dbus failures so far)")
         bus = dbus.SessionBus()
         
-        if  'org.gnome.SessionManager' in bus.list_names() and utils.isProcessRunning("gnome-screensaver"):
+        if  'org.gnome.SessionManager' in bus.list_names() and not utils.isProcessRunning("xscreensaver"):
             self.screensaverAndPowersavingType = "Gnome3"
 
         elif 'org.freedesktop.ScreenSaver' in bus.list_names() and \
