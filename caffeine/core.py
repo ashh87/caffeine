@@ -133,64 +133,26 @@ class Caffeine(GObject.GObject):
 
             output = commands.getoutput("python flash_detect.py")
 
-            if output == "1":
-                raise escape
+            if output.startswith("1"):
+		if self.preventedForFlash:
+			self.setActivated(False)
+			self.preventedForFlash = False
+			self.status_string = ""
+	        raise escape
 
             elif output.startswith("2\n"):
                 data = output.split("\n")[-1]
                 logging.error("Exception: " + str(data))
-
-                raise escape
-                
-
-
-            parsed = []
-            for row in output.split("\n"):
-                try:
-                    iden, length = row.split(" ")
-                    length = int(length)
-                    parsed.append([iden, length])
-                
-                except Exception, data:
-                    logging.error("Exception: " + str(data))
-
-            for iden, length in parsed:
-                if iden != "" and iden not in self.flash_durations:
-                        end_time = time.localtime(int(time.time() + length))
-                        self.flash_durations[iden] = end_time
-
-            idens = [iden for iden, length in parsed]
-
-            for key in self.flash_durations.keys():
-                if key not in idens:
-                    self.flash_durations.pop(key)
-
-            dtimes = []
-            for t in self.flash_durations.values():
-                
-                dtimes.append(int(time.mktime(t) - time.time()))
-
-            dtimes.sort(reverse=True)
-
-            if dtimes == []:
-                if self.preventedForFlash:
-                    self.setActivated(False, note=False)
                 raise escape
 
-            dtime = dtimes[0]
-            if dtime <= 0:
-                raise escape
 
-            if self.preventedForFlash or not self.getActivated():
+            if not self.getActivated():
 
                 logging.info("Caffeine has detected "+
-                            "that Flash video is playing, "+
-                            "and will activate for "+str(dtime)+
-                            " seconds.")
+                            "that Flash video is playing")
                 
                 self.status_string = _("Activated for Flash video")
-                self.timedActivation(dtime, note=False)
-                self.status_string = _("Activated for Flash video")
+                self.setActivated(True)
                 self.preventedForFlash = True
             else:
                 logging.info("Caffeine has detected "+
@@ -207,9 +169,6 @@ class Caffeine(GObject.GObject):
         except Exception, data:
 
             logging.error("Exception: " + str(data))
-            
-        if self.preventedForFlash:
-            self.setActivated(False, note=False)
 
         return True
 

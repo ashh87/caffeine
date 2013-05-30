@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import kaa.metadata
 import commands
 import sys
 import os
@@ -9,20 +8,21 @@ import stat
 if __name__ == "__main__":
 
     try:
-        output = commands.getoutput("pgrep -f flashplayer | xargs -I PID find /proc/PID/fd -lname '/tmp/Flash*'")
-        if not bool(output):
-            print 1
-            sys.exit(1)
+	tmp = commands.getoutput("pgrep -f flashplayer");
+	found = False;
+	for ttmp in tmp.split("\n"):
+	        output = commands.getoutput("wmctrl -lp | grep " + ttmp + " | awk '{ print $1 }' | xargs -I PID xprop -id PID | grep -q _NET_WM_STATE_FULLSCREEN && echo true || echo false")
 
-        for filepath in output.split("\n"):
-            if filepath != "":
-                meta = kaa.metadata.parse(filepath)
-                url = meta.url[7:]
-                length = str(meta.length)
-                iden = str(os.stat(url).st_ino) + length
-                print iden+" "+length.split(".")[0]
+	        for filepath in output.split("\n"):
+	            if filepath == "true":
+			found = True;
+
+	if (found):
+		print 3;
+	else:
+		print 1;
 
     except Exception, data:
         print 2
-        print data
+        print output.__len__()
         sys.exit(2)
